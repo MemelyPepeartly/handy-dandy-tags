@@ -2,7 +2,7 @@
   "id": "<%= id %>",
   "title": "Handy Dandy Tags",
   "version": "<%= version %>",
-  "description": "Tag playlists, playlist tracks, and scene notes, then filter those sidebar lists by tag.",
+  "description": "Tag playlists, tracks, scene notes, and journal entries; filter sidebar lists; optionally show playlist tags on tracks; rename or delete tags everywhere.",
   "authors": [
     {
       "name": "Memely",

@@ -1,7 +1,12 @@
 import { CONSTANTS, TEMPLATE_PATH } from "./constants";
 import { registerSettings } from "./setup/settings";
 import { getTags, normalizeTag, setTags } from "./tags/store";
-import { buildEditTagsContextMenuEntry, onRenderNoteTab, onRenderPlaylistDirectory } from "./ui/directory";
+import {
+  buildEditTagsContextMenuEntry,
+  onRenderJournalDirectory,
+  onRenderNoteTab,
+  onRenderPlaylistDirectory,
+} from "./ui/directory";
 
 interface HandyDandyToolRegistration {
   id: string;
@@ -49,6 +54,12 @@ function registerRenderHooks(): void {
       onRenderNoteTab(application as Parameters<typeof onRenderNoteTab>[0], element);
     }
   });
+
+  Hooks.on("renderJournalDirectory", (application, element) => {
+    if (element instanceof HTMLElement) {
+      onRenderJournalDirectory(application as Parameters<typeof onRenderJournalDirectory>[0], element);
+    }
+  });
 }
 
 function registerContextMenuHooks(): void {
@@ -65,6 +76,12 @@ function registerContextMenuHooks(): void {
   });
 
   registerCustomHook("getNotePlaceableContextOptions", (_application, menuItems) => {
+    if (Array.isArray(menuItems)) {
+      menuItems.push(buildEditTagsContextMenuEntry());
+    }
+  });
+
+  registerCustomHook("getJournalEntryContextOptions", (_application, menuItems) => {
     if (Array.isArray(menuItems)) {
       menuItems.push(buildEditTagsContextMenuEntry());
     }
@@ -89,11 +106,11 @@ Hooks.once("setup", () => {
 
   namespace.core.registerTool({
     id: "tags",
-    title: "Playlist, Track, and Note Tags",
+    title: "Playlist, Track, Note, and Journal Tags",
     icon: "fa-solid fa-tags",
     description:
-      "GMs can tag playlists, individual tracks, and scene notes, then filter each sidebar list with its own tag selector.",
-    location: "Playlists sidebar tab and Placeables Notes tab",
+      "GMs tag playlists, tracks, scene notes, and journal entries. Tracks can optionally show playlist tags without storing them twice. GMs can rename or delete a tag across every tagged document.",
+    location: "Playlists sidebar tab, Placeables Notes tab, and Journal sidebar tab",
     showInHandyGroup: false,
   });
 });

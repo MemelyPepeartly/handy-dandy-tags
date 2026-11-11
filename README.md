@@ -1,13 +1,14 @@
 # Handy Dandy Tags
 
-Foundry VTT leaf module for **Handy Dandy Core**. GMs can attach tags to playlists, individual playlist tracks, and scene notes (NoteDocument in the Placeables Notes tab), see those tags at a glance in the sidebar, and filter each list with its own tag selector.
+Foundry VTT leaf module for **Handy Dandy Core**. GMs can attach tags to playlists, playlist tracks, scene notes, and journal entries, see those tags in the sidebar, filter each list with its own tag selector, optionally show playlist tags on tracks without duplicating storage, and rename or delete a tag across every document that stores it.
 
 ## Scope
 
 - Playlists and tracks in the Playlists sidebar tab
 - Scene notes in the Placeables Notes tab (`NoteTab`)
+- Journal entries in the Journal sidebar tab (`JournalDirectory`)
 
-Out of scope: journal entries, Handy Dandy Map Notes, actors, items, and PF2E data.
+Out of scope: journal pages, journal categories, Handy Dandy Map Notes, compendium documents, actors, items, and PF2E data.
 
 ## Requirements
 

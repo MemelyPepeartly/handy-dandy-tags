@@ -1,14 +1,18 @@
 import {
+  SETTING_JOURNAL_FILTER,
   SETTING_NOTE_FILTER,
   SETTING_PLAYLIST_FILTER,
   SETTING_TRACK_FILTER,
   getTagFilterSetting,
+  setShowPlaylistTagsOnTracksListener,
   setTagFilterSetting,
 } from "../setup/settings";
 import {
   canEditTags,
   collectDatasetValues,
   documentsMatch,
+  getEffectiveTags,
+  getInheritedTags,
   getTags,
   listHasTag,
   resolveDocumentFromElement,
@@ -20,6 +24,8 @@ import { sameTag } from "../tags/model";
 const FILTERED_CLASS = "handy-dandy-tag-filtered";
 const TAGS_ROOT_CLASS = "handy-dandy-tags";
 const FILTER_ATTR = "data-handy-dandy-tags-filter";
+
+type FilterListAttr = "playlist" | "track" | "note" | "journal";
 
 type SidebarTab = {
   render: (options?: boolean | Record<string, unknown>) => Promise<unknown>;
@@ -34,6 +40,8 @@ type SidebarTabState = {
 let lastPlaylistDirectory: SidebarTabState | null = null;
 
 let lastNoteTab: SidebarTabState | null = null;
+
+let lastJournalDirectory: SidebarTabState | null = null;
 
 const boundSearchRoots = new WeakSet<HTMLElement>();
 
@@ -77,14 +85,25 @@ function enumerateRowElements(root: HTMLElement): Map<TagDocument, HTMLElement> 
   return map;
 }
 
+function isInheritedOnTrack(tagDocument: TagDocument, tag: string): boolean {
+  if (!(tagDocument instanceof PlaylistSound)) {
+    return false;
+  }
+  return listHasTag(getInheritedTags(tagDocument), tag);
+}
+
 function buildChipRow(tagDocument: TagDocument): HTMLSpanElement {
   const row = globalThis.document.createElement("span");
   row.className = TAGS_ROOT_CLASS;
 
-  for (const tag of getTags(tagDocument)) {
+  for (const tag of getEffectiveTags(tagDocument)) {
     const chip = globalThis.document.createElement("span");
-    chip.className = "handy-dandy-tag";
+    const inherited = isInheritedOnTrack(tagDocument, tag);
+    chip.className = inherited ? "handy-dandy-tag handy-dandy-tag-inherited" : "handy-dandy-tag";
     chip.textContent = tag;
+    if (inherited) {
+      chip.title = "From playlist";
+    }
     row.appendChild(chip);
   }
 
@@ -130,7 +149,7 @@ function collectTrackTags(): string[] {
   for (const playlist of playlists) {
     const sounds = playlist.getEmbeddedCollection("PlaylistSound");
     for (const sound of sounds.contents) {
-      tags.push(...getTags(sound));
+      tags.push(...getEffectiveTags(sound));
     }
   }
   return sortedUniqueTags(tags);
@@ -148,11 +167,34 @@ function collectNoteTags(): string[] {
   return sortedUniqueTags(tags);
 }
 
+function collectJournalTags(): string[] {
+  const tags: string[] = [];
+  for (const entry of (game as ReadyGame).journal?.contents ?? []) {
+    tags.push(...getTags(entry));
+  }
+  return sortedUniqueTags(tags);
+}
+
+function resolveActiveFilter(savedFilter: string, choices: string[]): string {
+  if (!savedFilter) {
+    return "";
+  }
+  if (!choices.some((tag) => sameTag(tag, savedFilter))) {
+    return "";
+  }
+  return savedFilter;
+}
+
 function buildFilterSelect(
-  filterKey: typeof SETTING_PLAYLIST_FILTER | typeof SETTING_TRACK_FILTER | typeof SETTING_NOTE_FILTER,
-  listAttr: "playlist" | "track" | "note",
+  filterKey:
+    | typeof SETTING_PLAYLIST_FILTER
+    | typeof SETTING_TRACK_FILTER
+    | typeof SETTING_NOTE_FILTER
+    | typeof SETTING_JOURNAL_FILTER,
+  listAttr: FilterListAttr,
   labelText: string,
   tagChoices: string[],
+  onChange: () => void,
 ): HTMLElement {
   const wrapper = document.createElement("label");
   wrapper.textContent = labelText;
@@ -182,13 +224,7 @@ function buildFilterSelect(
   }
 
   select.addEventListener("change", () => {
-    void setTagFilterSetting(filterKey, select.value).then(() => {
-      if (listAttr === "note" && lastNoteTab) {
-        applyNoteTabFilters(lastNoteTab.element);
-      } else if (lastPlaylistDirectory) {
-        applyPlaylistDirectoryFilters(lastPlaylistDirectory.element);
-      }
-    });
+    void setTagFilterSetting(filterKey, select.value).then(onChange);
   });
 
   wrapper.appendChild(select);
@@ -198,15 +234,58 @@ function buildFilterSelect(
 function insertPlaylistFilters(element: HTMLElement): void {
   const bar = document.createElement("div");
   bar.className = "handy-dandy-tags-filters";
-  bar.appendChild(buildFilterSelect(SETTING_PLAYLIST_FILTER, "playlist", "Playlist tag:", collectPlaylistTags()));
-  bar.appendChild(buildFilterSelect(SETTING_TRACK_FILTER, "track", "Track tag:", collectTrackTags()));
+  bar.appendChild(
+    buildFilterSelect(
+      SETTING_PLAYLIST_FILTER,
+      "playlist",
+      "Playlist tag:",
+      collectPlaylistTags(),
+      () => {
+        if (lastPlaylistDirectory) {
+          applyPlaylistDirectoryFilters(lastPlaylistDirectory.element);
+        }
+      },
+    ),
+  );
+  bar.appendChild(
+    buildFilterSelect(SETTING_TRACK_FILTER, "track", "Track tag:", collectTrackTags(), () => {
+      if (lastPlaylistDirectory) {
+        applyPlaylistDirectoryFilters(lastPlaylistDirectory.element);
+      }
+    }),
+  );
   element.prepend(bar);
 }
 
 function insertNoteFilters(element: HTMLElement): void {
   const bar = document.createElement("div");
   bar.className = "handy-dandy-tags-filters";
-  bar.appendChild(buildFilterSelect(SETTING_NOTE_FILTER, "note", "Note tag:", collectNoteTags()));
+  bar.appendChild(
+    buildFilterSelect(SETTING_NOTE_FILTER, "note", "Note tag:", collectNoteTags(), () => {
+      if (lastNoteTab) {
+        applyNoteTabFilters(lastNoteTab.element);
+      }
+    }),
+  );
+  element.prepend(bar);
+}
+
+function insertJournalFilters(element: HTMLElement): void {
+  const bar = document.createElement("div");
+  bar.className = "handy-dandy-tags-filters";
+  bar.appendChild(
+    buildFilterSelect(
+      SETTING_JOURNAL_FILTER,
+      "journal",
+      "Journal tag:",
+      collectJournalTags(),
+      () => {
+        if (lastJournalDirectory) {
+          applyJournalDirectoryFilters(lastJournalDirectory.element);
+        }
+      },
+    ),
+  );
   element.prepend(bar);
 }
 
@@ -228,12 +307,18 @@ function isSceneNote(document: TagDocument): document is NoteDocument.Implementa
   return document.documentName === "Note";
 }
 
+function isJournalEntry(document: TagDocument): document is JournalEntry {
+  return document.documentName === "JournalEntry";
+}
+
 function applyPlaylistDirectoryFilters(element: HTMLElement): void {
   const rowMap = enumerateRowElements(element);
   clearFilterClasses(element);
 
-  const playlistFilter = getTagFilterSetting(SETTING_PLAYLIST_FILTER);
-  const trackFilter = getTagFilterSetting(SETTING_TRACK_FILTER);
+  const playlistChoices = collectPlaylistTags();
+  const trackChoices = collectTrackTags();
+  const playlistFilter = resolveActiveFilter(getTagFilterSetting(SETTING_PLAYLIST_FILTER), playlistChoices);
+  const trackFilter = resolveActiveFilter(getTagFilterSetting(SETTING_TRACK_FILTER), trackChoices);
 
   for (const [document, row] of rowMap) {
     if (isPlaylist(document)) {
@@ -243,7 +328,7 @@ function applyPlaylistDirectoryFilters(element: HTMLElement): void {
       continue;
     }
 
-    if (isPlaylistSound(document) && trackFilter && !listHasTag(getTags(document), trackFilter)) {
+    if (isPlaylistSound(document) && trackFilter && !listHasTag(getEffectiveTags(document), trackFilter)) {
       row.classList.add(FILTERED_CLASS);
     }
   }
@@ -253,7 +338,8 @@ function applyNoteTabFilters(element: HTMLElement): void {
   const rowMap = enumerateRowElements(element);
   clearFilterClasses(element);
 
-  const noteFilter = getTagFilterSetting(SETTING_NOTE_FILTER);
+  const noteChoices = collectNoteTags();
+  const noteFilter = resolveActiveFilter(getTagFilterSetting(SETTING_NOTE_FILTER), noteChoices);
   if (!noteFilter) {
     return;
   }
@@ -261,6 +347,25 @@ function applyNoteTabFilters(element: HTMLElement): void {
   for (const [document, row] of rowMap) {
     if (isSceneNote(document)) {
       if (!listHasTag(getTags(document), noteFilter)) {
+        row.classList.add(FILTERED_CLASS);
+      }
+    }
+  }
+}
+
+function applyJournalDirectoryFilters(element: HTMLElement): void {
+  const rowMap = enumerateRowElements(element);
+  clearFilterClasses(element);
+
+  const journalChoices = collectJournalTags();
+  const journalFilter = resolveActiveFilter(getTagFilterSetting(SETTING_JOURNAL_FILTER), journalChoices);
+  if (!journalFilter) {
+    return;
+  }
+
+  for (const [document, row] of rowMap) {
+    if (isJournalEntry(document)) {
+      if (!listHasTag(getTags(document), journalFilter)) {
         row.classList.add(FILTERED_CLASS);
       }
     }
@@ -292,9 +397,17 @@ function injectChips(root: HTMLElement): void {
   }
 }
 
+function syncEditorSidebarTabs(): void {
+  getTagEditor().setSidebarTabs(
+    lastPlaylistDirectory?.application ?? null,
+    lastNoteTab?.application ?? null,
+    lastJournalDirectory?.application ?? null,
+  );
+}
+
 export function onRenderPlaylistDirectory(application: SidebarTab, element: HTMLElement): void {
   lastPlaylistDirectory = { application, element };
-  getTagEditor().setSidebarTabs(application, lastNoteTab?.application ?? null);
+  syncEditorSidebarTabs();
 
   removeInjectedNodes(element);
   insertPlaylistFilters(element);
@@ -307,7 +420,7 @@ export function onRenderPlaylistDirectory(application: SidebarTab, element: HTML
 
 export function onRenderNoteTab(application: SidebarTab, element: HTMLElement): void {
   lastNoteTab = { application, element };
-  getTagEditor().setSidebarTabs(lastPlaylistDirectory?.application ?? null, application);
+  syncEditorSidebarTabs();
 
   removeInjectedNodes(element);
   insertNoteFilters(element);
@@ -315,6 +428,19 @@ export function onRenderNoteTab(application: SidebarTab, element: HTMLElement): 
   applyNoteTabFilters(element);
   attachSearchListeners(element, () => {
     applyNoteTabFilters(element);
+  });
+}
+
+export function onRenderJournalDirectory(application: SidebarTab, element: HTMLElement): void {
+  lastJournalDirectory = { application, element };
+  syncEditorSidebarTabs();
+
+  removeInjectedNodes(element);
+  insertJournalFilters(element);
+  injectChips(element);
+  applyJournalDirectoryFilters(element);
+  attachSearchListeners(element, () => {
+    applyJournalDirectoryFilters(element);
   });
 }
 
@@ -342,3 +468,10 @@ export function buildEditTagsContextMenuEntry(): foundry.ContextMenuEntry {
     },
   };
 }
+
+setShowPlaylistTagsOnTracksListener(() => {
+  const state = lastPlaylistDirectory;
+  if (state?.application.rendered) {
+    void state.application.render();
+  }
+});

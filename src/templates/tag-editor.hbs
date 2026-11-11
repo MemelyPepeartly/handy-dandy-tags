@@ -1,12 +1,39 @@
 <div class="standard-form">
   <p class="notes">Editing tags for <strong>{{documentName}}</strong></p>
+  {{#if showInheritedLine}}
+    <p class="notes handy-dandy-tag-inherited-line">Shown from the playlist: {{#each inheritedPlaylistTags}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+  {{/if}}
   <ul class="tag-list">
     {{#each tags}}
-      <li>
-        <span class="handy-dandy-tag">{{this}}</span>
-        <button type="button" data-action="removeTag" data-tag="{{this}}">
-          <i class="fa-solid fa-times"></i> Remove
-        </button>
+      <li data-tag="{{tag}}">
+        {{#if isRenaming}}
+          <div class="tag-rename-row">
+            <input type="text" name="renameTag-{{tag}}" value="{{tag}}" autocomplete="off" />
+            <button type="button" data-action="saveRename" data-tag="{{tag}}">
+              <i class="fa-solid fa-check"></i> Save
+            </button>
+            <button type="button" data-action="cancelRename">
+              Cancel
+            </button>
+          </div>
+        {{else}}
+          <span class="handy-dandy-tag">{{tag}}</span>
+          <span class="tag-row-actions">
+            <button type="button" data-action="removeTag" data-tag="{{tag}}">
+              <i class="fa-solid fa-times"></i> Remove
+            </button>
+            <button type="button" data-action="startRename" data-tag="{{tag}}">
+              <i class="fa-solid fa-pen"></i> Rename
+            </button>
+            <button type="button" class="{{#if pendingDeleteConfirm}}handy-dandy-tag-delete-confirm{{/if}}" data-action="deleteEverywhere" data-tag="{{tag}}">
+              {{#if pendingDeleteConfirm}}
+                Confirm delete everywhere
+              {{else}}
+                <i class="fa-solid fa-trash"></i> Delete everywhere
+              {{/if}}
+            </button>
+          </span>
+        {{/if}}
       </li>
     {{/each}}
   </ul>

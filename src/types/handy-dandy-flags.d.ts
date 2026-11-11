@@ -17,5 +17,10 @@ declare module "fvtt-types/configuration" {
         tags?: string[];
       };
     };
+    JournalEntry: {
+      "handy-dandy-tags": {
+        tags?: string[];
+      };
+    };
   }
 }

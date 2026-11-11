@@ -46,6 +46,16 @@ export function listHasTag(tags: readonly string[], tag: string): boolean {
   return tags.some((entry) => entry.toLocaleLowerCase() === needle);
 }
 
+export function replaceTagInList(tags: readonly string[], from: string, to: string): string[] {
+  const next = tags.map((entry) => (sameTag(entry, from) ? to : entry));
+  return normalizeTagList(next);
+}
+
+export function removeTagFromList(tags: readonly string[], tag: string): string[] {
+  const next = tags.filter((entry) => !sameTag(entry, tag));
+  return normalizeTagList(next);
+}
+
 export function readStoredTags(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];

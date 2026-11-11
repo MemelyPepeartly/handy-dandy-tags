@@ -11,9 +11,9 @@ declare global {
       dev: Record<string, unknown>;
       flows: Record<string, unknown>;
       tags: {
-        getTags: (document: Playlist | PlaylistSound | NoteDocument.Implementation) => string[];
+        getTags: (document: Playlist | PlaylistSound | NoteDocument.Implementation | JournalEntry) => string[];
         setTags: (
-          document: Playlist | PlaylistSound | NoteDocument.Implementation,
+          document: Playlist | PlaylistSound | NoteDocument.Implementation | JournalEntry,
           tags: readonly string[],
         ) => Promise<void>;
         normalizeTag: (value: string) => string | null;
@@ -35,6 +35,12 @@ declare module "#configuration" {
         options: unknown,
       ) => void;
       renderNoteTab: (application: unknown, element: HTMLElement, context: unknown, options: unknown) => void;
+      renderJournalDirectory: (
+        application: foundry.applications.sidebar.tabs.JournalDirectory.Any,
+        element: HTMLElement,
+        context: unknown,
+        options: unknown,
+      ) => void;
       getPlaylistContextOptions: (
         application: foundry.applications.sidebar.tabs.PlaylistDirectory.Any,
         menuItems: foundry.ContextMenuEntry[],
@@ -44,6 +50,10 @@ declare module "#configuration" {
         menuItems: foundry.ContextMenuEntry[],
       ) => void;
       getNotePlaceableContextOptions: (application: unknown, menuItems: foundry.ContextMenuEntry[]) => void;
+      getJournalEntryContextOptions: (
+        application: foundry.applications.sidebar.tabs.JournalDirectory.Any,
+        menuItems: foundry.ContextMenuEntry[],
+      ) => void;
     }
   }
 }
