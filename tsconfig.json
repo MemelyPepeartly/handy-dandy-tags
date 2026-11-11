@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "rootDir": "./src/scripts",
+    "outDir": "./dist",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["fvtt-types"],
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/scripts/**/*", "src/types/**/*"]
+}
