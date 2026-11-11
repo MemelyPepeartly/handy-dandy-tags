@@ -1,0 +1,20 @@
+{
+  "name": "handy-dandy-tags",
+  "version": "1.17.11",
+  "type": "module",
+  "scripts": {
+    "build": "webpack --mode production"
+  },
+  "overrides": {
+    "@types/earcut": "3.0.0"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^13.0.0",
+    "fork-ts-checker-webpack-plugin": "^9.0.0",
+    "fvtt-types": "npm:@league-of-foundry-developers/foundry-vtt-types@^13.345.1",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.4.0",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  }
+}

@@ -1,0 +1,19 @@
+<div class="standard-form">
+  <p class="notes">Editing tags for <strong>{{documentName}}</strong></p>
+  <ul class="tag-list">
+    {{#each tags}}
+      <li>
+        <span class="handy-dandy-tag">{{this}}</span>
+        <button type="button" data-action="removeTag" data-tag="{{this}}">
+          <i class="fa-solid fa-times"></i> Remove
+        </button>
+      </li>
+    {{/each}}
+  </ul>
+  <div class="tag-add-row form-group">
+    <input type="text" name="newTag" placeholder="New tag" autocomplete="off" />
+    <button type="button" data-action="addTag">
+      <i class="fa-solid fa-plus"></i> Add
+    </button>
+  </div>
+</div>
