@@ -1,0 +1,38 @@
+{
+  "id": "<%= id %>",
+  "title": "Handy Dandy Tags",
+  "version": "<%= version %>",
+  "description": "Tag playlists, playlist tracks, and scene notes, then filter those sidebar lists by tag.",
+  "authors": [
+    {
+      "name": "Memely",
+      "discord": "memely"
+    }
+  ],
+  "compatibility": {
+    "minimum": "14.360",
+    "verified": "14.370",
+    "maximum": "14"
+  },
+  "url": "https://github.com/MemelyPepeartly/handy-dandy-tags",
+  "manifest": "https://github.com/MemelyPepeartly/handy-dandy-tags/releases/download/latest/module.json",
+  "download": "https://github.com/MemelyPepeartly/handy-dandy-tags/releases/download/latest/module.zip",
+  "bugs": "",
+  "esmodules": ["<%= id %>.js"],
+  "styles": ["styles/tags.css"],
+  "languages": [],
+  "packs": [],
+  "relationships": {
+    "requires": [
+      {
+        "id": "handy-dandy-core",
+        "type": "module",
+        "compatibility": {
+          "minimum": "1.17.11",
+          "verified": "1.17.11"
+        },
+        "manifest": "https://github.com/MemelyPepeartly/handy-dandy-core/releases/download/latest/module.json"
+      }
+    ]
+  }
+}
