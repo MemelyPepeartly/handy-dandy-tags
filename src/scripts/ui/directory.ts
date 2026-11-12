@@ -185,6 +185,34 @@ function resolveActiveFilter(savedFilter: string, choices: string[]): string {
   return savedFilter;
 }
 
+function placeFilterBar(root: HTMLElement, bar: HTMLElement): void {
+  const header = root.querySelector<HTMLElement>("header.directory-header");
+  if (header) {
+    const search = header.querySelector("search");
+    if (search) {
+      search.before(bar);
+      return;
+    }
+    const actions = header.querySelector(".header-actions, .action-buttons");
+    if (actions) {
+      actions.after(bar);
+      return;
+    }
+    header.append(bar);
+    return;
+  }
+
+  const search = root.querySelector("search");
+  const searchInput = root.querySelector<HTMLInputElement>("input[type='search'], input[name='search']");
+  const searchField = search ?? searchInput;
+  if (searchField) {
+    searchField.before(bar);
+    return;
+  }
+
+  root.prepend(bar);
+}
+
 function buildFilterSelect(
   filterKey:
     | typeof SETTING_PLAYLIST_FILTER
@@ -197,7 +225,9 @@ function buildFilterSelect(
   onChange: () => void,
 ): HTMLElement {
   const wrapper = document.createElement("label");
-  wrapper.textContent = labelText;
+  const caption = document.createElement("span");
+  caption.textContent = labelText;
+  wrapper.append(caption);
 
   const select = document.createElement("select");
   select.setAttribute(FILTER_ATTR, listAttr);
@@ -238,7 +268,7 @@ function insertPlaylistFilters(element: HTMLElement): void {
     buildFilterSelect(
       SETTING_PLAYLIST_FILTER,
       "playlist",
-      "Playlist tag:",
+      "Playlist",
       collectPlaylistTags(),
       () => {
         if (lastPlaylistDirectory) {
@@ -248,26 +278,26 @@ function insertPlaylistFilters(element: HTMLElement): void {
     ),
   );
   bar.appendChild(
-    buildFilterSelect(SETTING_TRACK_FILTER, "track", "Track tag:", collectTrackTags(), () => {
+    buildFilterSelect(SETTING_TRACK_FILTER, "track", "Track", collectTrackTags(), () => {
       if (lastPlaylistDirectory) {
         applyPlaylistDirectoryFilters(lastPlaylistDirectory.element);
       }
     }),
   );
-  element.prepend(bar);
+  placeFilterBar(element, bar);
 }
 
 function insertNoteFilters(element: HTMLElement): void {
   const bar = document.createElement("div");
   bar.className = "handy-dandy-tags-filters";
   bar.appendChild(
-    buildFilterSelect(SETTING_NOTE_FILTER, "note", "Note tag:", collectNoteTags(), () => {
+    buildFilterSelect(SETTING_NOTE_FILTER, "note", "Note", collectNoteTags(), () => {
       if (lastNoteTab) {
         applyNoteTabFilters(lastNoteTab.element);
       }
     }),
   );
-  element.prepend(bar);
+  placeFilterBar(element, bar);
 }
 
 function insertJournalFilters(element: HTMLElement): void {
@@ -277,7 +307,7 @@ function insertJournalFilters(element: HTMLElement): void {
     buildFilterSelect(
       SETTING_JOURNAL_FILTER,
       "journal",
-      "Journal tag:",
+      "Journal",
       collectJournalTags(),
       () => {
         if (lastJournalDirectory) {
@@ -286,7 +316,7 @@ function insertJournalFilters(element: HTMLElement): void {
       },
     ),
   );
-  element.prepend(bar);
+  placeFilterBar(element, bar);
 }
 
 function clearFilterClasses(root: HTMLElement): void {

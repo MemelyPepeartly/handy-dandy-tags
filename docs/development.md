@@ -2,7 +2,7 @@
 
 Handy Dandy Tags is a leaf module. It depends on Core for `game.handyDandy.core.registerTool` and the preserved `game.handyDandy.tags` namespace slot. It does not add scene controls.
 
-Requires Handy Dandy Core **1.17.11** (Core package version; tags ships as **1.17.12**).
+Requires Handy Dandy Core **1.17.11** (Core package version; tags ships as **1.17.13**).
 
 ## Data model
 
@@ -32,7 +32,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-Expect `dist/handy-dandy-tags.js`, `dist/module.json` version `1.17.12`, `dist/templates/tag-editor.hbs`, and `dist/styles/tags.css`. Dist manifest still requires Core `1.17.11`, Foundry `verified` `14.370`, and has no `systems` entry.
+Expect `dist/handy-dandy-tags.js`, `dist/module.json` version `1.17.13`, `dist/templates/tag-editor.hbs`, and `dist/styles/tags.css`. Dist manifest still requires Core `1.17.11`, Foundry `verified` `14.370`, and has no `systems` entry.
 
 ## Manual GM verification (Foundry world)
 
